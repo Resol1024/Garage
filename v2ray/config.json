@@ -10,39 +10,18 @@
         "settings": {
             "clients": [
                 {
-                    "id": "56ce8457-83bd-8c6b-e546-c7975e469539",
+                    "id": "36179fd6-9337-9bb8-4458-3832c9c1378c",
                     "level": 1,
                     "alterId": 64
                 }
             ]
-        },
-        "streamSettings": {
-            "network": "kcp"
-        },
-        "detour": {
-            "to": "vmess-detour-670407"
         }
     },
     "outbound": {
         "protocol": "freedom",
         "settings": {}
     },
-    "inboundDetour": [
-        {
-            "protocol": "vmess",
-            "port": "10000-10010",
-            "tag": "vmess-detour-670407",
-            "settings": {},
-            "allocate": {
-                "strategy": "random",
-                "concurrency": 5,
-                "refresh": 5
-            },
-            "streamSettings": {
-                "network": "kcp"
-            }
-        }
-    ],
+    "inboundDetour": [],
     "outboundDetour": [
         {
             "protocol": "blackhole",
