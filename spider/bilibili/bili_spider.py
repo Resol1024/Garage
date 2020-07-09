@@ -7,8 +7,8 @@ import json
 class BiliSpider:	
 
 	'''
-	profile_info:
-	{
+	return structure:
+	result = {
 		title     : "",
 		video_url : "",
 		audio_url : ""
@@ -18,38 +18,79 @@ class BiliSpider:
 	<html>
 	|-<head>
 	| |-<script>
-	|   |-windows.__playinfo(json)
-	|     |-data
-	|       |-dash
-	|         |-video([])
-	|         | |-{}
-	|         |   |-baseUrl(straight download url)
-	|         |-audio([])
-	|         	|-{}
-	|             |-baseUrl(straight download url)
-	|
-	|-<body>
-	| |-<div id="app">
-	|   |-<div class="v-wrap">
-	|     |-<div class="l-con">
-	|       |-<div id="viebox_report">
-	|         |-<h1 title="$title">
+	| | |-windows.__playinfo(json)
+	| |   |-data(normal case)
+	| |   . |-dash
+	| |   .   |-video([])
+	| |   .   | |-{}
+	| |   .   |   |-baseUrl(straight download url)
+	| |   .   |-audio([])
+	| |   .   	|-{}
+	| |   .       |-baseUrl(straight download url)
+	| |   |-data(old case)
+	| |     |-durl([])  
+	| |       |-{}
+	| |         |-url(.flv in most case)
+	| |-<script>(can't be seen in browser)
+	|   |-window.__INITIAL_STATE__(normal case)
+	|   . |-videoData
+	|   .   |-title
+	|   .   |-pages([])
+	|   .     |-{}
+	|   .       |-page(parameter p)
+	|   .       |-part(title)
+	|	.
+	|   |-window.__INITIAL_STATE__(path like:/bangumi/play/ep307622)
+	|     |-h1Title
+
 	'''
 	def profile(url:str)->dict:
 		result = {}
 
-		petree = etree.HTML(requests.get(url).text)
-		result["title"] = petree.xpath("/html/body//div[@id='viewbox_report']/h1/@title")[0]
+		#by set CURRENT_FNVAL=16,can get a normal __playinfo__ 
+		petree = etree.HTML(requests.get(url,headers={"cookie":"CURRENT_FNVAL=16"}).text)
 
-		for t in petree.xpath("/html/head/script/text()"):
-			if "window.__playinfo__" not in t:
-				continue
+		#window.__playinfo__
+		playinfo_text = petree.xpath("//script[contains(text(),'window.__playinfo__={')]")[0].text
+		playinfo_text = playinfo_text[playinfo_text.find("{"):]
+		playinfo = json.loads(playinfo_text)["data"]["dash"]
+	
+		#window.__initial_state__
+		initial_state = {}
+		initial_state_text = petree.xpath("//script[contains(text(),'window.__INITIAL_STATE__={')]")[0].text
+		initial_state_text = initial_state_text[initial_state_text.find("{"):initial_state_text.find(";(function()")]
+		initial_state = json.loads(initial_state_text)
 
-			playinfo = json.loads(t[t.find("{"):])["data"]["dash"]
-			#Though we got http protocol url there,but real request is using https protocal url
-			result["video_url"] = playinfo["video"][0]["baseUrl"].replace("http","https",1)
-			result["audio_url"] = playinfo["audio"][0]["baseUrl"].replace("http","https",1)
-			break;
+		#title
+		if "?p=" in url:
+			for e in initial_state["videoData"]["pages"]:
+				if e["page"] == int(url.split("?p=")[1]):
+					result["title"] = e["part"]			
+					break
+		elif "h1Title" in initial_state:
+			result["title"] = initial_state["h1Title"]
+		else:
+			result["title"] = initial_state["videoData"]["title"]
+		#remove invalid character in title
+		result["title"] = result["title"].replace("\\","-")
+		result["title"] = result["title"].replace("/","-")
+
+		#set video_url & audio_url 
+		if isinstance(playinfo["video"][0]["baseUrl"],list):
+			result["video_url"] = playinfo["video"][0]["baseUrl"][0]
+		else:
+			result["video_url"] = playinfo["video"][0]["baseUrl"]
+		
+		if isinstance(playinfo["audio"][0]["baseUrl"],list):
+			result["audio_url"] = playinfo["audio"][0]["baseUrl"][0]
+		else:
+			result["audio_url"] = playinfo["audio"][0]["baseUrl"]
+
+		#replace http with https if necessary
+		if "https" not in result["video_url"]:
+			result["video_url"] = result["video_url"].replace("http","https",1)
+		if "https" not in result["audio_url"]:
+			result["audio_url"] = result["audio_url"].replace("http","https",1)
 
 		return result
 
