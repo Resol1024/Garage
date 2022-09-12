@@ -33,6 +33,7 @@ echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
 sysctl -p
 
 #start v2ray service
+systemctl enable v2ray
 systemctl start v2ray
 
 #automatic starting
