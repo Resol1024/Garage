@@ -4,7 +4,7 @@
 #This script is design for ubuntu 20.04 x86 in vultr to install v2ray
 
 #arguments
-V2RAY_INSTALL_SCRIPT_URL="https://install.direct/go.sh"
+V2RAY_INSTALL_SCRIPT_URL="https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh"
 V2RAY_CONFIG_FILE_URL="https://raw.githubusercontent.com/Resol1024/Scripts/master/v2ray/config.json"
 
 exit_with_msg_if_last_comand_failed(){
