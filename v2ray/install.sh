@@ -24,7 +24,7 @@ rm v2ray_origin_install.sh
 #config v2ray
 wget -O config.json $V2RAY_CONFIG_FILE_URL
 exit_with_msg_if_last_comand_failed "failed to download v2ray config"
-cp -f config.json /etc/v2ray/config.json
+cp -f config.json /usr/local/etc/v2ray/config.json
 rm config.json
 
 #enable BBR
